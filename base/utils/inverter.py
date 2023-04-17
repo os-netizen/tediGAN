@@ -11,6 +11,13 @@ from models.stylegan_generator import StyleGANGenerator
 from models.stylegan_encoder import StyleGANEncoder
 from models.perceptual_model import PerceptualModel
 
+import sys
+# add path of styleGAN repo
+path=r'C:\Users\omkar\Desktop\college\sem6\sop\running_tediGAN\stylegan2-ada-pytorch'
+sys.path.append(path)
+import generate
+import projector
+
 __all__ = ['StyleGANInverter']
 
 def _softplus(x):
@@ -180,13 +187,17 @@ class StyleGANInverter(object):
         are from the optimization process every `self.iteration // num_viz`
         steps.
     """
+
+    network_path=""
+
     if self.mode == 'gen':
       init_z = self.G.sample(1, latent_space_type='wp',
                              z_space_dim=512, num_layers=14)
       init_z = self.G.preprocess(init_z, latent_space_type='wp')
       z = torch.Tensor(init_z).to(self.run_device)
       z.requires_grad = True
-      x = self.G._synthesize(init_z, latent_space_type='wp')['image']
+      # x = self.G._synthesize(init_z, latent_space_type='wp')['image']
+      x=generate.generate_images(None, network_path, None, 1, "const", None, None, init_z)
       x = torch.Tensor(x).to(self.run_device)
     else:
       x = image[np.newaxis]
@@ -201,27 +212,30 @@ class StyleGANInverter(object):
     viz_results = []
     viz_results.append(self.G.postprocess(_get_tensor_value(x))[0])
     x_init_inv = self.G.net.synthesis(z)
+    # x_init_inv=generate_images(None, network_path, None, 1, "const", out_dir, None, z)
     viz_results.append(self.G.postprocess(_get_tensor_value(x_init_inv))[0])
     pbar = tqdm(range(1, self.iteration + 1), leave=True)
     for step in pbar:
       loss = 0.0
       # Reconstruction loss.
-      x_rec = self.G.net.synthesis(z)
+      # x_rec = self.G.net.synthesis(z)
+      x_rec=generate.generate_images(None, network_path, None, 1, "const", None, None, z)
       loss_pix = torch.mean((x - x_rec) ** 2)
       loss = loss + loss_pix * self.loss_pix_weight
       log_message = f'loss_pix: {_get_tensor_value(loss_pix):.3f}'
 
       # Perceptual loss.
-      if self.loss_feat_weight:
-        x_feat = self.F.net(x)
-        x_rec_feat = self.F.net(x_rec)
-        loss_feat = torch.mean((x_feat - x_rec_feat) ** 2)
-        loss = loss + loss_feat * self.loss_feat_weight
-        log_message += f', loss_feat: {_get_tensor_value(loss_feat):.3f}'
+      # if self.loss_feat_weight:
+      #   x_feat = self.F.net(x)
+      #   x_rec_feat = self.F.net(x_rec)
+      #   loss_feat = torch.mean((x_feat - x_rec_feat) ** 2)
+      #   loss = loss + loss_feat * self.loss_feat_weight
+      #   log_message += f', loss_feat: {_get_tensor_value(loss_feat):.3f}'
 
       # Regularization loss.
       if self.loss_reg_weight:
-        z_rec = self.E.net(x_rec).view(1, *self.encode_dim)
+        # z_rec = self.E.net(x_rec).view(1, *self.encode_dim)
+        z_rec=projector.run_projection(network_path, x_rec, None, False, 303, 1000)
         loss_reg = torch.mean((z - z_rec) ** 2)
         loss = loss + loss_reg * self.loss_reg_weight
         log_message += f', loss_reg: {_get_tensor_value(loss_reg):.3f}'
