@@ -102,7 +102,7 @@ class StyleGANInverter(object):
 
     self.G = StyleGANGenerator(self.model_name, self.logger)
     self.E = StyleGANEncoder(self.model_name, self.logger)
-    self.F = PerceptualModel(min_val=self.G.min_val, max_val=self.G.max_val)
+    # self.F = PerceptualModel(min_val=self.G.min_val, max_val=self.G.max_val)
     self.encode_dim = [self.G.num_layers, self.G.w_space_dim]
     self.run_device = self.G.run_device
     assert list(self.encode_dim) == list(self.E.encode_dim)
@@ -192,8 +192,8 @@ class StyleGANInverter(object):
 
     if self.mode == 'gen':
       init_z = self.G.sample(1, latent_space_type='wp',
-                             z_space_dim=512, num_layers=14)
-      init_z = self.G.preprocess(init_z, latent_space_type='wp')
+                             z_space_dim=512, num_layers=12)
+      # init_z = self.G.preprocess(init_z, latent_space_type='wp')
       z = torch.Tensor(init_z).to(self.run_device)
       z.requires_grad = True
       # x = self.G._synthesize(init_z, latent_space_type='wp')['image']
