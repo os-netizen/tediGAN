@@ -265,6 +265,6 @@ class StyleGANInverter(object):
 
     return _get_tensor_value(z), viz_results
 
-  def easy_invert(self, image, num_viz=0):
+  def easy_invert(self, image, num_viz=1):
     """Wraps functions `preprocess()` and `invert()` together."""
     return self.invert(self.preprocess(image), num_viz)
