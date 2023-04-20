@@ -13,7 +13,7 @@ from models.perceptual_model import PerceptualModel
 
 import sys
 # add path of styleGAN repo
-path=r'C:\Users\omkar\Desktop\college\sem6\sop\running_tediGAN\stylegan2-ada-pytorch'
+path=r'/content/styleGAN2'
 sys.path.append(path)
 import generate
 import projector
@@ -188,7 +188,7 @@ class StyleGANInverter(object):
         steps.
     """
 
-    network_path=""
+    network_path="/content/gdrive/MyDrive/running_tediGAN/models/network-snapshot-000500.pkl"
 
     if self.mode == 'gen':
       init_z = self.G.sample(1, latent_space_type='wp',
@@ -197,7 +197,7 @@ class StyleGANInverter(object):
       z = torch.Tensor(init_z).to(self.run_device)
       z.requires_grad = True
       # x = self.G._synthesize(init_z, latent_space_type='wp')['image']
-      x=generate.generate_images(None, network_path, None, 1, "const", None, None, init_z)
+      x=generate.generate_images(None, network_path, None, 1, "const", "/content/out", None, init_z)
       x = torch.Tensor(x).to(self.run_device)
     else:
       x = image[np.newaxis]
@@ -219,8 +219,10 @@ class StyleGANInverter(object):
       loss = 0.0
       # Reconstruction loss.
       # x_rec = self.G.net.synthesis(z)
-      x_rec=generate.generate_images(None, network_path, None, 1, "const", None, None, z)
-      loss_pix = torch.mean((x - x_rec) ** 2)
+      x_rec=generate.generate_images(None, network_path, None, 1, "const", "/content/out", None, z)
+      # print(x_rec.shape)
+      # print(x_rec.type)
+      loss_pix = torch.mean((x.cpu() - x_rec) ** 2)
       loss = loss + loss_pix * self.loss_pix_weight
       log_message = f'loss_pix: {_get_tensor_value(loss_pix):.3f}'
 
@@ -242,7 +244,7 @@ class StyleGANInverter(object):
 
       # CLIP loss.
       if self.loss_clip_weight:
-        loss_clip = self.clip_loss(x_rec, self.text_inputs)
+        loss_clip = self.clip_loss(torch.from_numpy(x_rec).float().to('cuda'), self.text_inputs)
         loss = loss + loss_clip[0][0] * self.loss_clip_weight
         log_message += f', loss_clip: {_get_tensor_value(loss_clip[0][0]):.3f}'
 
@@ -259,7 +261,7 @@ class StyleGANInverter(object):
       optimizer.step()
 
       if num_viz > 0 and step % (self.iteration // num_viz) == 0:
-        viz_results.append(self.G.postprocess(_get_tensor_value(x_rec))[0])
+        viz_results.append(self.G.postprocess(_get_tensor_value(torch.from_numpy(x_rec)))[0])
 
     return _get_tensor_value(z), viz_results
 
