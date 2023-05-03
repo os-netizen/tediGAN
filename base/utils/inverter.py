@@ -259,7 +259,8 @@ class StyleGANInverter(object):
       optimizer.zero_grad()
       loss.backward()
       optimizer.step()
-
+      
+      x=torch.Tensor(x_rec)
       if num_viz > 0 and step % (self.iteration // num_viz) == 0:
         viz_results.append(self.G.postprocess(_get_tensor_value(torch.from_numpy(x_rec)))[0])
 
