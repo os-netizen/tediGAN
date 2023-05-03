@@ -191,8 +191,9 @@ class StyleGANInverter(object):
     network_path="/content/gdrive/MyDrive/running_tediGAN/models/network-snapshot-000500.pkl"
 
     if self.mode == 'gen':
-      init_z = self.G.sample(1, latent_space_type='wp',
-                             z_space_dim=512, num_layers=12)
+#       init_z = self.G.sample(1, latent_space_type='wp',
+#                              z_space_dim=512, num_layers=12)
+      init_z=np.random.randn(1, 14, 512)
       # init_z = self.G.preprocess(init_z, latent_space_type='wp')
       z = torch.Tensor(init_z).to(self.run_device)
       z.requires_grad = True
