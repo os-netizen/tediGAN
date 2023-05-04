@@ -102,7 +102,7 @@ class StyleGANInverter(object):
 
     self.G = StyleGANGenerator(self.model_name, self.logger)
     self.E = StyleGANEncoder(self.model_name, self.logger)
-    # self.F = PerceptualModel(min_val=self.G.min_val, max_val=self.G.max_val)
+    self.F = PerceptualModel(min_val=self.G.min_val, max_val=self.G.max_val)
     self.encode_dim = [self.G.num_layers, self.G.w_space_dim]
     self.run_device = self.G.run_device
     assert list(self.encode_dim) == list(self.E.encode_dim)
@@ -228,12 +228,12 @@ class StyleGANInverter(object):
       log_message = f'loss_pix: {_get_tensor_value(loss_pix):.3f}'
 
       # Perceptual loss.
-      # if self.loss_feat_weight:
-      #   x_feat = self.F.net(x)
-      #   x_rec_feat = self.F.net(x_rec)
-      #   loss_feat = torch.mean((x_feat - x_rec_feat) ** 2)
-      #   loss = loss + loss_feat * self.loss_feat_weight
-      #   log_message += f', loss_feat: {_get_tensor_value(loss_feat):.3f}'
+      if self.loss_feat_weight:
+        x_feat = self.F.net(x.to(self.run_device))
+        x_rec_feat = self.F.net(torch.Tensor(x_rec).to(self.run_device))
+        loss_feat = torch.mean((x_feat - x_rec_feat) ** 2)
+        loss = loss + loss_feat * self.loss_feat_weight
+        log_message += f', loss_feat: {_get_tensor_value(loss_feat):.3f}'
 
       # Regularization loss.
       if self.loss_reg_weight:
@@ -261,7 +261,7 @@ class StyleGANInverter(object):
       loss.backward()
       optimizer.step()
       
-      x=torch.Tensor(x_rec)
+      # x=torch.Tensor(x_rec)
       if num_viz > 0 and step % (self.iteration // num_viz) == 0:
         viz_results.append(self.G.postprocess(_get_tensor_value(torch.from_numpy(x_rec)))[0])
 
